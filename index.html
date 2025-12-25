@@ -476,21 +476,21 @@ function drawWolf() {
 }
 
 function drawLayer(ctx, type, item) {
-    // 如果沒穿或是編號0，就不畫
+    // 1. 如果沒穿 (id 為 0) 則跳過
     if (!item || item.id === 0) return;
 
-    // 檢查圖片是否已下載到快取中
+    // 2. 取得快取中的圖片 (例如：top_1)
     const cacheKey = `${type}_${item.id}`;
     const img = imageCache[cacheKey];
 
-    if (img) {
-        // 取得該配件的顏色代碼
+    // 3. 確保圖片已載入且顏色索引存在
+    if (img && img.complete && window.wolfColors[item.color]) {
         const colorHex = window.wolfColors[item.color].hex;
         
-        // 產生染色後的圖片
+        // 4. 產生染色後的 Canvas
         const tintedCanvas = getTintedCanvas(img, colorHex);
         
-        // 畫在主畫布上
+        // 5. 繪製到主畫布
         ctx.drawImage(tintedCanvas, 0, 0);
     }
 }
@@ -525,51 +525,7 @@ function getTintedCanvas(img, color) {
 
     return maskCanvas;
 }
-
-
-        // 模擬載入圖片與染色 (若無圖片則畫色塊)
-        function drawLayer(ctx, type, item, scale) {
-            if (!item || item.id === 0) return;
-
-            const colorHex = (type === 'base') ? '#999' : window.wolfColors[item.color].hex;
-            ctx.fillStyle = colorHex;
-
-            // --- 這裡是用程式碼畫假像素 ---
-            // 如果您有圖片，請把這裡改成 load image -> drawImage
-            // 為了示範，我畫簡單的矩形代表不同部位
-            
-            if (type === 'base') {
-                // 畫一個簡單的狼形狀
-                ctx.fillStyle = '#ccc'; ctx.fillRect(20, 20, 24, 30); // 身體
-                ctx.fillRect(22, 10, 20, 10); // 頭
-                ctx.fillStyle = '#333'; ctx.fillRect(25, 14, 2, 2); ctx.fillRect(37, 14, 2, 2); // 眼睛
-                ctx.fillStyle = '#ccc'; ctx.fillRect(18, 5, 4, 6); ctx.fillRect(42, 5, 4, 6); // 耳朵
-                ctx.fillRect(20, 50, 8, 10); ctx.fillRect(36, 50, 8, 10); // 腳
-            }
-            else if (type === 'top') {
-                 // 上衣隨款式變化一點形狀
-                 ctx.fillRect(18, 20, 28, 18); 
-                 if(item.id > 3) ctx.fillRect(16, 20, 32, 5); // 寬肩款
-            }
-            else if (type === 'bottom') {
-                 ctx.fillRect(20, 38, 24, 12);
-            }
-            else if (type === 'hat') {
-                 ctx.fillRect(20, 4, 24, 6); // 帽簷
-                 ctx.fillRect(22, 0, 20, 4); // 帽頂
-                 if(item.id === 6) { ctx.fillStyle="#FFD700"; ctx.fillText("👑", 24, 0); } // 特殊款
-            }
-            else if (type === 'shoes') {
-                 ctx.fillRect(19, 56, 10, 6); ctx.fillRect(35, 56, 10, 6);
-            }
-            else if (type === 'float') {
-                 const symbols = ["❤", "!", "★", "◡", "zZ", "SOS"];
-                 ctx.font = "16px monospace";
-                 ctx.fillStyle = colorHex;
-                 ctx.fillText(symbols[item.id-1] || "?", 45, 15);
-            }
-        }
-
+        
         // --- 4. 抽卡互動邏輯 ---
         
         function startJourney() {
