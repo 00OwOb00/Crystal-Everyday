@@ -496,28 +496,36 @@ function drawLayer(ctx, type, item) {
 }
         // --- [新增] 將灰階圖染色的工具 ---
 function getTintedCanvas(img, color) {
-    const c = document.createElement('canvas');
-    const ctx = c.getContext('2d');
-    c.width = 64;
-    c.height = 64;
+    // === 第 1 層：產生「染色結果」 ===
+    const tintCanvas = document.createElement('canvas');
+    const tintCtx = tintCanvas.getContext('2d');
+    tintCanvas.width = 64;
+    tintCanvas.height = 64;
 
-    // 1️⃣ 先填滿顏色
-    ctx.fillStyle = color;
-    ctx.fillRect(0, 0, 64, 64);
+    // 填滿顏色
+    tintCtx.fillStyle = color;
+    tintCtx.fillRect(0, 0, 64, 64);
 
-    // 2️⃣ 用配件灰階做「正片疊底」→ 保留明暗
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.drawImage(img, 0, 0, 64, 64);
+    // 乘上灰階（保留明暗）
+    tintCtx.globalCompositeOperation = 'multiply';
+    tintCtx.drawImage(img, 0, 0, 64, 64);
 
-    // 3️⃣ 用原圖當遮罩 → 只留下配件形狀
-    ctx.globalCompositeOperation = 'destination-in';
-    ctx.drawImage(img, 0, 0, 64, 64);
+    // === 第 2 層：用原圖 alpha 當遮罩 ===
+    const maskCanvas = document.createElement('canvas');
+    const maskCtx = maskCanvas.getContext('2d');
+    maskCanvas.width = 64;
+    maskCanvas.height = 64;
 
-    // 4️⃣ 重置模式（重要，避免影響後續）
-    ctx.globalCompositeOperation = 'source-over';
+    // 先畫原圖（只取 alpha）
+    maskCtx.drawImage(img, 0, 0, 64, 64);
 
-    return c;
+    // 把染色結果貼上去
+    maskCtx.globalCompositeOperation = 'source-in';
+    maskCtx.drawImage(tintCanvas, 0, 0);
+
+    return maskCanvas;
 }
+
 
         // 模擬載入圖片與染色 (若無圖片則畫色塊)
         function drawLayer(ctx, type, item, scale) {
