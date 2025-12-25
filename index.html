@@ -490,9 +490,28 @@ function drawLayer(ctx, type, item) {
         // 4. 產生染色後的 Canvas
         const tintedCanvas = getTintedCanvas(img, colorHex);
         
-        // 5. 繪製到主畫布
-        ctx.drawImage(tintedCanvas, 0, 0);
+        // --- 修正區域：縮放與位移邏輯 ---
+        let dx = 0;
+        let dy = 0;
+        let dWidth = 64;
+        let dHeight = 64;
+
+        // 針對「漂浮物」類型進行特殊處理
+        if (type === 'float') {
+            dWidth = 64 / 3;   // 寬度縮小為 1/3 (約 21px)
+            dHeight = 64 / 3;  // 高度縮小為 1/3，面積即為 1/9
+            dx = 42;           // 水平位移：移至右側，避開小狼身體
+
+            // 動態懸浮感：利用 Date.now() 產生隨時間變化的位移
+            // Math.sin 的結果在 -1 ~ 1 之間，乘上 3 表示上下晃動幅度為 6 像素
+            const hoverEffect = Math.sin(Date.now() / 300) * 3;
+            dy = 8 + hoverEffect; // 基本高度 8 加上晃動值
+        }
+        
+        // 5. 使用擴充參數繪製到主畫布 (dx, dy 是位置; dWidth, dHeight 是大小)
+        ctx.drawImage(tintedCanvas, dx, dy, dWidth, dHeight);
     }
+}
 }
         // --- [新增] 將灰階圖染色的工具 ---
 function getTintedCanvas(img, color) {
