@@ -226,6 +226,12 @@ function getStarTexture() {
 
         // 小狼狀態
         let wolfState = {
+            hat: { id: 0, color: 0 }, // 0 代表沒穿/初始
+            top: { id: 0, color: 0 },
+            bottom: { id: 0, color: 0 },
+            float: { id: 0, color: 0 },
+            inventory: [] // 存放已解鎖的配件字串 "type_id_colorIndex"
+        };
             // --- [新增] 圖片快取系統 ---
 const imageCache = {};
 
@@ -252,12 +258,7 @@ function preloadWolfImages() {
         }
     });
 }
-            hat: { id: 0, color: 0 }, // 0 代表沒穿/初始
-            top: { id: 0, color: 0 },
-            bottom: { id: 0, color: 0 },
-            float: { id: 0, color: 0 },
-            inventory: [] // 存放已解鎖的配件字串 "type_id_colorIndex"
-        };
+            
 
         // --- 1. 初始化與 3D 場景 ---
         function init() {
@@ -476,43 +477,6 @@ function getTintedCanvas(img, color) {
 
     return tempCanvas;
 }
-        // --- 核心：繪製小狼 (修正版) ---
-function drawWolf() {
-    const canvas = document.getElementById('wolf-canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, 64, 64);
-
-    // 確保素體已載入
-    if (imageCache['base']) {
-        ctx.drawImage(imageCache['base'], 0, 0, 64, 64);
-    }
-
-    // --- 圖層順序設定 (您要求的：上衣在下著上方) ---
-    // 順序：下著 -> 上衣 -> 帽子 -> 漂浮物
-    drawLayer(ctx, 'bottom', wolfState.bottom);
-    drawLayer(ctx, 'top', wolfState.top);
-    drawLayer(ctx, 'hat', wolfState.hat);
-    drawLayer(ctx, 'float', wolfState.float);
-}
-
-function drawLayer(ctx, type, item) {
-    // 如果沒穿或是編號0，就不畫
-    if (!item || item.id === 0) return;
-
-    // 檢查圖片是否已下載到快取中
-    const cacheKey = `${type}_${item.id}`;
-    const img = imageCache[cacheKey];
-
-    if (img) {
-        // 取得該配件的顏色代碼
-        const colorHex = window.wolfColors[item.color].hex;
-        
-        // 產生染色後的圖片
-        const tintedCanvas = getTintedCanvas(img, colorHex);
-        
-        // 畫在主畫布上
-        ctx.drawImage(tintedCanvas, 0, 0);
-    }
 }
 
         // --- 4. 抽卡互動邏輯 ---
@@ -723,6 +687,43 @@ function drawLayer(ctx, type, item) {
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
+         // --- 核心：繪製小狼 (修正版) ---
+function drawWolf() {
+    const canvas = document.getElementById('wolf-canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 64, 64);
+
+    // 確保素體已載入
+    if (imageCache['base']) {
+        ctx.drawImage(imageCache['base'], 0, 0, 64, 64);
+    }
+
+    // --- 圖層順序設定 (您要求的：上衣在下著上方) ---
+    // 順序：下著 -> 上衣 -> 帽子 -> 漂浮物
+    drawLayer(ctx, 'bottom', wolfState.bottom);
+    drawLayer(ctx, 'top', wolfState.top);
+    drawLayer(ctx, 'hat', wolfState.hat);
+    drawLayer(ctx, 'float', wolfState.float);
+}
+
+function drawLayer(ctx, type, item) {
+    // 如果沒穿或是編號0，就不畫
+    if (!item || item.id === 0) return;
+
+    // 檢查圖片是否已下載到快取中
+    const cacheKey = `${type}_${item.id}`;
+    const img = imageCache[cacheKey];
+
+    if (img) {
+        // 取得該配件的顏色代碼
+        const colorHex = window.wolfColors[item.color].hex;
+        
+        // 產生染色後的圖片
+        const tintedCanvas = getTintedCanvas(img, colorHex);
+        
+        // 畫在主畫布上
+        ctx.drawImage(tintedCanvas, 0, 0);
+    }
 
         // --- [修改] 動畫函式，增加星砂流動感 ---
 function animate() {
