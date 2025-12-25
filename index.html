@@ -496,24 +496,29 @@ function drawLayer(ctx, type, item) {
 }
         // --- [新增] 將灰階圖染色的工具 ---
 function getTintedCanvas(img, color) {
-    const tempCanvas = document.createElement('canvas');
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCanvas.width = 64;
-    tempCanvas.height = 64;
+    const c = document.createElement('canvas');
+    const ctx = c.getContext('2d');
+    c.width = 64;
+    c.height = 64;
 
-    // 1. 繪製原始灰階圖
-    tempCtx.drawImage(img, 0, 0, 64, 64);
+    // 1️⃣ 先填滿顏色
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, 64, 64);
 
-    // 2. 設定混合模式：只在有像素的地方上色 (Source-Atop)
-    // 如果您的圖是半透明灰階，也可以試試 'multiply' (正片疊底)
-    tempCtx.globalCompositeOperation = 'source-atop';
-    
-    // 3. 填滿顏色
-    tempCtx.fillStyle = color;
-    tempCtx.fillRect(0, 0, 64, 64);
+    // 2️⃣ 用配件灰階做「正片疊底」→ 保留明暗
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.drawImage(img, 0, 0, 64, 64);
 
-    return tempCanvas;
+    // 3️⃣ 用原圖當遮罩 → 只留下配件形狀
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.drawImage(img, 0, 0, 64, 64);
+
+    // 4️⃣ 重置模式（重要，避免影響後續）
+    ctx.globalCompositeOperation = 'source-over';
+
+    return c;
 }
+
         // 模擬載入圖片與染色 (若無圖片則畫色塊)
         function drawLayer(ctx, type, item, scale) {
             if (!item || item.id === 0) return;
