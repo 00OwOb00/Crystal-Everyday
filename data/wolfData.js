@@ -15,10 +15,10 @@ window.wolfColors = [
 
 // 定義部位與款式 (這裡對應檔名後綴，例如 hat_1, hat_2...)
 window.wolfParts = {
-    hat:    { label: "頭飾", count: 6 }, // 1~6
+    hat:    { label: "帽子", count: 6 }, // 1~6
     top:    { label: "上衣", count: 6 },
     bottom: { label: "下著", count: 6 },
-    float:  { label: "心情", count: 6, names: ["水晶球", "愛心", "星星", "兔子", "幽靈", "麻糊"] }
+    float:  { label: "小夥伴", count: 6, names: ["水晶球", "愛心", "星星", "兔子", "幽靈", "麻糊"] }
 };
 
 // 計算總組合數 (用於除錯)
