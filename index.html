@@ -232,7 +232,8 @@ function getStarTexture() {
             float: { id: 0, color: 0 },
             inventory: [] // 存放已解鎖的配件字串 "type_id_colorIndex"
         };
-            // --- [新增] 圖片快取系統 ---
+
+        // --- [新增] 圖片快取系統 ---
 const imageCache = {};
 
 function preloadWolfImages() {
@@ -258,7 +259,6 @@ function preloadWolfImages() {
         }
     });
 }
-            
 
         // --- 1. 初始化與 3D 場景 ---
         function init() {
@@ -305,8 +305,6 @@ function preloadWolfImages() {
             checkDailyReward();
 
             preloadWolfImages(); // <--- [新增這一行] 啟動圖片預載
-    
-    animate();
 
             // 動畫循環
             animate();
@@ -421,7 +419,7 @@ function loadCrystalsNebula() {
 
         function giveRandomItem() {
             // 從所有組合中隨機抽取
-            const types = ['hat', 'top', 'bottom', 'float'];
+            const types = ['hat', 'top', 'bottom', 'shoes', 'float'];
             const type = types[Math.floor(Math.random() * types.length)];
             const count = window.wolfParts[type].count;
             const styleId = Math.floor(Math.random() * count) + 1; // 1~6
@@ -446,6 +444,7 @@ function loadCrystalsNebula() {
                     hat: wolfState.hat,
                     top: wolfState.top,
                     bottom: wolfState.bottom,
+                    shoes: wolfState.shoes,
                     float: wolfState.float
                 }
             };
@@ -457,6 +456,44 @@ function loadCrystalsNebula() {
             document.getElementById('collection-count').innerText = wolfState.inventory.length;
         }
 
+        // --- 核心：繪製小狼 (修正版) ---
+function drawWolf() {
+    const canvas = document.getElementById('wolf-canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 64, 64);
+
+    // 確保素體已載入
+    if (imageCache['base']) {
+        ctx.drawImage(imageCache['base'], 0, 0, 64, 64);
+    }
+
+    // --- 圖層順序設定 (您要求的：上衣在下著上方) ---
+    // 順序：下著 -> 上衣 -> 帽子 -> 漂浮物
+    drawLayer(ctx, 'bottom', wolfState.bottom);
+    drawLayer(ctx, 'top', wolfState.top);
+    drawLayer(ctx, 'hat', wolfState.hat);
+    drawLayer(ctx, 'float', wolfState.float);
+}
+
+function drawLayer(ctx, type, item) {
+    // 如果沒穿或是編號0，就不畫
+    if (!item || item.id === 0) return;
+
+    // 檢查圖片是否已下載到快取中
+    const cacheKey = `${type}_${item.id}`;
+    const img = imageCache[cacheKey];
+
+    if (img) {
+        // 取得該配件的顏色代碼
+        const colorHex = window.wolfColors[item.color].hex;
+        
+        // 產生染色後的圖片
+        const tintedCanvas = getTintedCanvas(img, colorHex);
+        
+        // 畫在主畫布上
+        ctx.drawImage(tintedCanvas, 0, 0);
+    }
+}
         // --- [新增] 將灰階圖染色的工具 ---
 function getTintedCanvas(img, color) {
     const tempCanvas = document.createElement('canvas');
@@ -477,6 +514,48 @@ function getTintedCanvas(img, color) {
 
     return tempCanvas;
 }
+        // 模擬載入圖片與染色 (若無圖片則畫色塊)
+        function drawLayer(ctx, type, item, scale) {
+            if (!item || item.id === 0) return;
+
+            const colorHex = (type === 'base') ? '#999' : window.wolfColors[item.color].hex;
+            ctx.fillStyle = colorHex;
+
+            // --- 這裡是用程式碼畫假像素 ---
+            // 如果您有圖片，請把這裡改成 load image -> drawImage
+            // 為了示範，我畫簡單的矩形代表不同部位
+            
+            if (type === 'base') {
+                // 畫一個簡單的狼形狀
+                ctx.fillStyle = '#ccc'; ctx.fillRect(20, 20, 24, 30); // 身體
+                ctx.fillRect(22, 10, 20, 10); // 頭
+                ctx.fillStyle = '#333'; ctx.fillRect(25, 14, 2, 2); ctx.fillRect(37, 14, 2, 2); // 眼睛
+                ctx.fillStyle = '#ccc'; ctx.fillRect(18, 5, 4, 6); ctx.fillRect(42, 5, 4, 6); // 耳朵
+                ctx.fillRect(20, 50, 8, 10); ctx.fillRect(36, 50, 8, 10); // 腳
+            }
+            else if (type === 'top') {
+                 // 上衣隨款式變化一點形狀
+                 ctx.fillRect(18, 20, 28, 18); 
+                 if(item.id > 3) ctx.fillRect(16, 20, 32, 5); // 寬肩款
+            }
+            else if (type === 'bottom') {
+                 ctx.fillRect(20, 38, 24, 12);
+            }
+            else if (type === 'hat') {
+                 ctx.fillRect(20, 4, 24, 6); // 帽簷
+                 ctx.fillRect(22, 0, 20, 4); // 帽頂
+                 if(item.id === 6) { ctx.fillStyle="#FFD700"; ctx.fillText("👑", 24, 0); } // 特殊款
+            }
+            else if (type === 'shoes') {
+                 ctx.fillRect(19, 56, 10, 6); ctx.fillRect(35, 56, 10, 6);
+            }
+            else if (type === 'float') {
+                 const symbols = ["❤", "!", "★", "◡", "zZ", "SOS"];
+                 ctx.font = "16px monospace";
+                 ctx.fillStyle = colorHex;
+                 ctx.fillText(symbols[item.id-1] || "?", 45, 15);
+            }
+        }
 
         // --- 4. 抽卡互動邏輯 ---
         
@@ -686,43 +765,6 @@ function getTintedCanvas(img, color) {
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
-         // --- 核心：繪製小狼 (修正版) ---
-function drawWolf() {
-    const canvas = document.getElementById('wolf-canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, 64, 64);
-
-    // 確保素體已載入
-    if (imageCache['base']) {
-        ctx.drawImage(imageCache['base'], 0, 0, 64, 64);
-    }
-
-    // --- 圖層順序設定 (您要求的：上衣在下著上方) ---
-    // 順序：下著 -> 上衣 -> 帽子 -> 漂浮物
-    drawLayer(ctx, 'bottom', wolfState.bottom);
-    drawLayer(ctx, 'top', wolfState.top);
-    drawLayer(ctx, 'hat', wolfState.hat);
-    drawLayer(ctx, 'float', wolfState.float);
-}
-
-function drawLayer(ctx, type, item) {
-    // 如果沒穿或是編號0，就不畫
-    if (!item || item.id === 0) return;
-
-    // 檢查圖片是否已下載到快取中
-    const cacheKey = `${type}_${item.id}`;
-    const img = imageCache[cacheKey];
-
-    if (img) {
-        // 取得該配件的顏色代碼
-        const colorHex = window.wolfColors[item.color].hex;
-        
-        // 產生染色後的圖片
-        const tintedCanvas = getTintedCanvas(img, colorHex);
-        
-        // 畫在主畫布上
-        ctx.drawImage(tintedCanvas, 0, 0);
-    }
 
         // --- [修改] 動畫函式，增加星砂流動感 ---
 function animate() {
@@ -753,7 +795,7 @@ function animate() {
 
         // 啟動
         init();
-}
+
     </script>
 </body>
 </html>
