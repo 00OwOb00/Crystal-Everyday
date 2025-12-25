@@ -18,7 +18,6 @@ window.wolfParts = {
     hat:    { label: "頭飾", count: 6 }, // 1~6
     top:    { label: "上衣", count: 6 },
     bottom: { label: "下著", count: 6 },
-    shoes:  { label: "鞋子", count: 6 },
     float:  { label: "心情", count: 6, names: ["水晶球", "愛心", "星星", "兔子", "幽靈", "麻糊"] }
 };
 
